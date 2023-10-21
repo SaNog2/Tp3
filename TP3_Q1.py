@@ -70,9 +70,8 @@ def _receive_modulus_base(source: socket.socket) -> tuple[int, int]:
     - la base.
     """
 
-    modulo = glosocket.recv_mesg(source)
-    base = glosocket.recv_mesg(source)
-    print(modulo + "\n" + base)
+    modulo = int(glosocket.recv_mesg(source))
+    base = int(glosocket.recv_mesg(source))
 
     return int(modulo), int(base)
 
@@ -98,7 +97,7 @@ def _exchange_publickeys(own_pubkey: int, peer: socket.socket) -> int:
     clé publique de l'autre et la retourne.
     """
     glosocket.send_mesg(peer, str(own_pubkey))
-    p_key = glosocket.recv_mesg(peer)
+    p_key = int(glosocket.recv_mesg(peer))
     return p_key
 
 
@@ -126,14 +125,12 @@ def _server(port: int) -> NoReturn:
     
     
     while True:
-        
         (client_soc, client_addr) = soc.accept()
+        #modulus_client, base_client = _receive_modulus_base(client_soc)
         modulus, base = _generate_modulus_base(client_soc)
-        # modulus, base = _receive_modulus_base(client_soc)
         private_key, public_key =_compute_two_keys(modulus, base)
         peer_public_key = _exchange_publickeys(public_key, client_soc)
         shared_key = _compute_shared_key(private_key, peer_public_key, modulus)
-        print(shared_key)
 
         client_soc.close()
 
@@ -148,6 +145,13 @@ def _client(destination: str, port: int) -> None:
     adresse = (destination, port)
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect(adresse)
+    modulus, base = _receive_modulus_base(soc)
+    private_key, public_key = _compute_two_keys(modulus, base)
+    server_public_key = _exchange_publickeys(public_key, soc)
+
+    soc.close()
+
+    return None
 
 
 # NE PAS ÉDITER PASSÉ CE POINT
