@@ -131,6 +131,7 @@ def _server(port: int) -> NoReturn:
         private_key, public_key =_compute_two_keys(modulus, base)
         peer_public_key = _exchange_publickeys(public_key, client_soc)
         shared_key = _compute_shared_key(private_key, peer_public_key, modulus)
+        print(shared_key)
 
         client_soc.close()
 
@@ -148,6 +149,8 @@ def _client(destination: str, port: int) -> None:
     modulus, base = _receive_modulus_base(soc)
     private_key, public_key = _compute_two_keys(modulus, base)
     server_public_key = _exchange_publickeys(public_key, soc)
+    shared_key = +_compute_shared_key(private_key, server_public_key, modulus)
+    print(shared_key)
 
     soc.close()
 
