@@ -126,12 +126,13 @@ def _server(port: int) -> NoReturn:
     
     while True:
         (client_soc, client_addr) = soc.accept()
-        #modulus_client, base_client = _receive_modulus_base(client_soc)
         modulus, base = _generate_modulus_base(client_soc)
-        private_key, public_key =_compute_two_keys(modulus, base)
-        peer_public_key = _exchange_publickeys(public_key, client_soc)
-        shared_key = _compute_shared_key(private_key, peer_public_key, modulus)
-        print(shared_key)
+        try:
+            private_key, public_key =_compute_two_keys(modulus, base)
+            peer_public_key = _exchange_publickeys(public_key, client_soc)
+            print(f"The shared key is {_compute_shared_key(private_key, peer_public_key, modulus)}")
+        except glosocket.GLOSocketError:
+            print("Client didn't connect correctly. Closing connection.")
 
         client_soc.close()
 
@@ -145,12 +146,18 @@ def _client(destination: str, port: int) -> None:
 
     adresse = (destination, port)
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.connect(adresse)
-    modulus, base = _receive_modulus_base(soc)
-    private_key, public_key = _compute_two_keys(modulus, base)
-    server_public_key = _exchange_publickeys(public_key, soc)
-    shared_key = +_compute_shared_key(private_key, server_public_key, modulus)
-    print(shared_key)
+    try:
+        soc.connect(adresse)
+        modulus, base = _receive_modulus_base(soc)
+        private_key, public_key = _compute_two_keys(modulus, base)
+        server_public_key = _exchange_publickeys(public_key, soc)
+        print(f"The shared key is {_compute_shared_key(private_key, server_public_key, modulus)}")
+    except glosocket.GLOSocketError:
+        print(f"Connection to {adresse[0]}:{adresse[1]} failed")
+        sys.exit(1)
+    except ConnectionRefusedError:
+        print(f"Connection to {adresse[0]}:{adresse[1]} refused")
+        sys.exit(1)
 
     soc.close()
 
